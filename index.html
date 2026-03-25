@@ -1,211 +1,267 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, Shield, MousePointerClick } from 'lucide-react';
-
-const PALETTE = {
-  darkPurple: '#532A8C',
-  mutedPurple: '#9D8ABB',
-  green: '#7ABF49',
-  mutedGreen: '#96BF78',
-  lightGray: '#F2F2F2',
-  lightPurple: '#C3ACE8',
-};
-
-const CARDS_DATA = [
-  { pairId: 1, text: "Category:\nCritical Items" },
-  { pairId: 1, text: "Example:\nBlood and saliva on extraction forceps, surgical burs" },
-
-  { pairId: 2, text: "Category:\nSemi-critical Items" },
-  { pairId: 2, text: "Example:\nA used impression tray, intraoral mirrors" },
-
-  { pairId: 3, text: "Category:\nNon-critical Items" },
-  { pairId: 3, text: "Example:\nShield for the curing light, patient safety glasses" }
-];
-
-export default function App() {
-  const [cards, setCards] = useState([]);
-  const [flippedIndexes, setFlippedIndexes] = useState([]);
-  const [matches, setMatches] = useState(0);
-  const [moves, setMoves] = useState(0);
-  const [gameWon, setGameWon] = useState(false);
-
-  // Initialize and shuffle game
-  const initializeGame = () => {
-    const shuffledCards = [...CARDS_DATA]
-      .sort(() => Math.random() - 0.5)
-      .map((card, index) => ({
-        ...card,
-        id: index,
-        isFlipped: false,
-        isMatched: false,
-      }));
-    setCards(shuffledCards);
-    setFlippedIndexes([]);
-    setMatches(0);
-    setMoves(0);
-    setGameWon(false);
-  };
-
-  useEffect(() => {
-    initializeGame();
-  }, []);
-
-  const handleCardClick = (index) => {
-    // Prevent clicking if two cards are already flipped, or if card is already flipped/matched
-    if (
-      flippedIndexes.length === 2 ||
-      cards[index].isFlipped ||
-      cards[index].isMatched
-    ) {
-      return;
-    }
-
-    const newCards = [...cards];
-    newCards[index].isFlipped = true;
-    setCards(newCards);
-
-    const newFlippedIndexes = [...flippedIndexes, index];
-    setFlippedIndexes(newFlippedIndexes);
-
-    if (newFlippedIndexes.length === 2) {
-      setMoves(moves + 1);
-      checkForMatch(newFlippedIndexes);
-    }
-  };
-
-  const checkForMatch = (currentFlippedIndexes) => {
-    const [firstIndex, secondIndex] = currentFlippedIndexes;
-    const isMatch = cards[firstIndex].pairId === cards[secondIndex].pairId;
-
-    if (isMatch) {
-      setTimeout(() => {
-        const newCards = [...cards];
-        newCards[firstIndex].isMatched = true;
-        newCards[secondIndex].isMatched = true;
-        setCards(newCards);
-        setFlippedIndexes([]);
-        
-        const newMatchesCount = matches + 1;
-        setMatches(newMatchesCount);
-        if (newMatchesCount === CARDS_DATA.length / 2) {
-          setGameWon(true);
-        }
-      }, 500);
-    } else {
-      setTimeout(() => {
-        const newCards = [...cards];
-        newCards[firstIndex].isFlipped = false;
-        newCards[secondIndex].isFlipped = false;
-        setCards(newCards);
-        setFlippedIndexes([]);
-      }, 1200);
-    }
-  };
-
-  return (
-    <div 
-      className="min-h-screen flex flex-col items-center py-10 px-4 font-sans"
-      style={{ backgroundColor: PALETTE.lightGray, color: PALETTE.darkPurple }}
-    >
-      {/* Required 3D flip styling */}
-      <style>{`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaulding Classification Match</title>
+    <!-- Load Tailwind CSS directly for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Required 3D flip styling */
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
-      `}</style>
+        
+        body {
+            background-color: #F2F2F2;
+            color: #532A8C;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
 
-      <div className="max-w-4xl w-full">
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: PALETTE.darkPurple }}>
-            Spaulding Classification Match
-          </h1>
-          <p className="text-lg mb-2" style={{ color: PALETTE.mutedPurple }}>
-            Match the clinical categories to their real-life examples!
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <MousePointerClick size={20} style={{ color: PALETTE.darkPurple }} className="animate-pulse" />
-            <span className="text-base font-medium" style={{ color: PALETTE.darkPurple }}>
-              Tap or click on the tiles to flip them over and find the matches.
-            </span>
-          </div>
-          
-          <div className="flex justify-center items-center gap-8 mb-4">
-            <div className="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
-              <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: PALETTE.mutedPurple }}>Moves</span>
-              <span className="text-2xl font-bold" style={{ color: PALETTE.darkPurple }}>{moves}</span>
+    <div class="max-w-4xl w-full">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold mb-3" style="color: #532A8C;">
+                Spaulding Classification Match
+            </h1>
+            <p class="text-lg mb-2" style="color: #9D8ABB;">
+                Match the clinical categories to their real-life examples!
+            </p>
+            
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <!-- Cursor Icon -->
+                <svg class="animate-pulse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#532A8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15.08 11.2 18 10l-14-6 6 14 1.2-2.92"></path>
+                    <path d="M11 11l6 6"></path>
+                </svg>
+                <span class="text-base font-medium" style="color: #532A8C;">
+                    Tap or click on the tiles to flip them over and find the matches.
+                </span>
             </div>
-            <div className="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
-              <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: PALETTE.mutedPurple }}>Matches</span>
-              <span className="text-2xl font-bold" style={{ color: PALETTE.green }}>{matches} / {CARDS_DATA.length / 2}</span>
+            
+            <!-- Scoreboard -->
+            <div class="flex justify-center items-center gap-8 mb-4">
+                <div class="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
+                    <span class="text-sm font-semibold uppercase tracking-wider" style="color: #9D8ABB;">Moves</span>
+                    <span id="moves-count" class="text-2xl font-bold" style="color: #532A8C;">0</span>
+                </div>
+                <div class="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
+                    <span class="text-sm font-semibold uppercase tracking-wider" style="color: #9D8ABB;">Matches</span>
+                    <span id="matches-count" class="text-2xl font-bold" style="color: #7ABF49;">0 / 3</span>
+                </div>
+                <button onclick="initGame()" class="flex items-center gap-2 px-4 py-3 rounded-lg font-bold transition-transform hover:scale-105 shadow-md active:scale-95 cursor-pointer" style="background-color: #532A8C; color: #F2F2F2;">
+                    <!-- Refresh Icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    Restart
+                </button>
             </div>
-            <button
-              onClick={initializeGame}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg font-bold transition-transform hover:scale-105 shadow-md active:scale-95"
-              style={{ backgroundColor: PALETTE.darkPurple, color: PALETTE.lightGray }}
-            >
-              <RefreshCw size={20} />
-              Restart
-            </button>
-          </div>
         </div>
 
-        {/* Victory Message */}
-        {gameWon && (
-          <div 
-            className="mb-8 p-6 rounded-xl text-center shadow-lg animate-bounce"
-            style={{ backgroundColor: PALETTE.green, color: PALETTE.lightGray }}
-          >
-            <CheckCircle size={48} className="mx-auto mb-2" />
-            <h2 className="text-2xl font-bold mb-1">Excellent Work!</h2>
-            <p className="text-lg">You've mastered the Spaulding Classification in {moves} moves.</p>
-          </div>
-        )}
+        <!-- Victory Message (Hidden by default) -->
+        <div id="victory-message" class="hidden mb-8 p-6 rounded-xl text-center shadow-lg animate-bounce" style="background-color: #7ABF49; color: #F2F2F2;">
+            <!-- Check Icon -->
+            <svg class="mx-auto mb-2" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <h2 class="text-2xl font-bold mb-1">Excellent Work!</h2>
+            <p class="text-lg">You've mastered the Spaulding Classification in <span id="victory-moves">0</span> moves.</p>
+        </div>
 
-        {/* Game Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto">
-          {cards.map((card, index) => (
-            <div
-              key={card.id}
-              className="relative aspect-[4/3] cursor-pointer perspective-1000 w-full"
-              onClick={() => handleCardClick(index)}
-            >
-              <div
-                className={`w-full h-full duration-500 transform-style-3d shadow-md rounded-xl ${
-                  card.isFlipped || card.isMatched ? 'rotate-y-180' : ''
-                }`}
-              >
-                {/* Front of Card (Face Down) */}
-                <div
-                  className="absolute w-full h-full backface-hidden rounded-xl flex items-center justify-center border-4 transition-all hover:brightness-110"
-                  style={{ 
-                    backgroundColor: PALETTE.darkPurple,
-                    borderColor: PALETTE.mutedPurple,
-                  }}
-                >
-                  <Shield size={48} style={{ color: PALETTE.lightPurple, opacity: 0.8 }} />
-                </div>
-
-                {/* Back of Card (Face Up / Content) */}
-                <div
-                  className="absolute w-full h-full backface-hidden rotate-y-180 rounded-xl flex items-center justify-center p-4 text-center border-4"
-                  style={{ 
-                    backgroundColor: card.isMatched ? PALETTE.green : PALETTE.lightPurple,
-                    borderColor: card.isMatched ? PALETTE.mutedGreen : PALETTE.darkPurple,
-                    color: card.isMatched ? PALETTE.lightGray : PALETTE.darkPurple
-                  }}
-                >
-                  <p className="text-sm md:text-base font-semibold leading-tight whitespace-pre-line">
-                    {card.text}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <!-- Game Grid Container -->
+        <div id="game-board" class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto">
+            <!-- Cards will be injected here by JavaScript -->
         </div>
         
-      </div>
     </div>
-  );
-}
+
+    <script>
+        // Game Logic and Data
+        const PALETTE = {
+            darkPurple: '#532A8C',
+            mutedPurple: '#9D8ABB',
+            green: '#7ABF49',
+            mutedGreen: '#96BF78',
+            lightGray: '#F2F2F2',
+            lightPurple: '#C3ACE8',
+        };
+
+        const CARDS_DATA = [
+            { pairId: 1, text: "Category:<br/>Critical Items" },
+            { pairId: 1, text: "Example:<br/>Blood and saliva on extraction forceps, surgical burs" },
+            { pairId: 2, text: "Category:<br/>Semi-critical Items" },
+            { pairId: 2, text: "Example:<br/>A used impression tray, intraoral mirrors" },
+            { pairId: 3, text: "Category:<br/>Non-critical Items" },
+            { pairId: 3, text: "Example:<br/>Shield for the curing light, patient safety glasses" }
+        ];
+
+        let cards = [];
+        let flippedIndexes = [];
+        let matches = 0;
+        let moves = 0;
+        let boardLocked = false;
+
+        function initGame() {
+            let shuffledData = [...CARDS_DATA];
+            let isProperlyMixed = false;
+
+            // Keep shuffling until the cards are thoroughly separated
+            while (!isProperlyMixed) {
+                // 1. Basic Fisher-Yates Shuffle
+                for (let i = shuffledData.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledData[i], shuffledData[j]] = [shuffledData[j], shuffledData[i]];
+                }
+
+                isProperlyMixed = true;
+                
+                // 2. Prevent pairs from being side-by-side
+                for (let i = 0; i < shuffledData.length - 1; i++) {
+                    if (shuffledData[i].pairId === shuffledData[i+1].pairId) {
+                        isProperlyMixed = false;
+                        break;
+                    }
+                }
+
+                // 3. Prevent pairs from being directly on top of each other in the desktop grid
+                if (isProperlyMixed) {
+                    for (let i = 0; i < 3; i++) {
+                        if (shuffledData[i].pairId === shuffledData[i+3].pairId) {
+                            isProperlyMixed = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Setup cards with the strictly verified mix
+            cards = shuffledData.map((card, index) => ({
+                ...card,
+                id: index,
+                isFlipped: false,
+                isMatched: false
+            }));
+
+            flippedIndexes = [];
+            matches = 0;
+            moves = 0;
+            boardLocked = false;
+
+            updateScoreboard();
+            document.getElementById('victory-message').classList.add('hidden');
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = ''; // Clear board
+
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'relative aspect-[4/3] cursor-pointer perspective-1000 w-full';
+                cardEl.onclick = () => handleCardClick(index);
+
+                cardEl.innerHTML = `
+                    <div id="card-inner-${index}" class="w-full h-full duration-500 transform-style-3d shadow-md rounded-xl">
+                        <!-- Front of Card (Face Down) -->
+                        <div class="absolute w-full h-full backface-hidden rounded-xl flex items-center justify-center border-4 transition-all hover:brightness-110"
+                             style="background-color: ${PALETTE.darkPurple}; border-color: ${PALETTE.mutedPurple};">
+                            <!-- Shield Icon -->
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="${PALETTE.lightPurple}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.8;">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+
+                        <!-- Back of Card (Face Up / Content) -->
+                        <div id="card-back-${index}" class="absolute w-full h-full backface-hidden rotate-y-180 rounded-xl flex items-center justify-center p-4 text-center border-4"
+                             style="background-color: ${PALETTE.lightPurple}; border-color: ${PALETTE.darkPurple}; color: ${PALETTE.darkPurple};">
+                            <p class="text-sm md:text-base font-semibold leading-tight">
+                                ${card.text}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                board.appendChild(cardEl);
+            });
+        }
+
+        function handleCardClick(index) {
+            // Ignore click if locked, or card already flipped/matched
+            if (boardLocked || cards[index].isFlipped || cards[index].isMatched) return;
+
+            // Flip the selected card
+            cards[index].isFlipped = true;
+            document.getElementById(`card-inner-${index}`).classList.add('rotate-y-180');
+            flippedIndexes.push(index);
+
+            // If two cards are flipped, check for match
+            if (flippedIndexes.length === 2) {
+                moves++;
+                updateScoreboard();
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            boardLocked = true; // Lock board while animating
+            const [firstIndex, secondIndex] = flippedIndexes;
+            const isMatch = cards[firstIndex].pairId === cards[secondIndex].pairId;
+
+            if (isMatch) {
+                setTimeout(() => {
+                    cards[firstIndex].isMatched = true;
+                    cards[secondIndex].isMatched = true;
+                    
+                    // Style the matched cards green
+                    const back1 = document.getElementById(`card-back-${firstIndex}`);
+                    const back2 = document.getElementById(`card-back-${secondIndex}`);
+                    
+                    back1.style.backgroundColor = PALETTE.green;
+                    back1.style.borderColor = PALETTE.mutedGreen;
+                    back1.style.color = PALETTE.lightGray;
+                    
+                    back2.style.backgroundColor = PALETTE.green;
+                    back2.style.borderColor = PALETTE.mutedGreen;
+                    back2.style.color = PALETTE.lightGray;
+
+                    matches++;
+                    updateScoreboard();
+                    flippedIndexes = [];
+                    boardLocked = false;
+
+                    // Check for win condition
+                    if (matches === 3) {
+                        document.getElementById('victory-message').classList.remove('hidden');
+                    }
+                }, 500);
+            } else {
+                // Not a match, flip back over
+                setTimeout(() => {
+                    cards[firstIndex].isFlipped = false;
+                    cards[secondIndex].isFlipped = false;
+                    document.getElementById(`card-inner-${firstIndex}`).classList.remove('rotate-y-180');
+                    document.getElementById(`card-inner-${secondIndex}`).classList.remove('rotate-y-180');
+                    flippedIndexes = [];
+                    boardLocked = false;
+                }, 1200);
+            }
+        }
+
+        function updateScoreboard() {
+            document.getElementById('moves-count').innerText = moves;
+            document.getElementById('matches-count').innerText = `${matches} / 3`;
+            document.getElementById('victory-moves').innerText = moves;
+        }
+
+        // Start the game when the page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>
