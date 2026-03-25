@@ -1,99 +1,211 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spaulding Classification</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Open Sans', sans-serif;
-      background-color: #F2F2F2;
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, CheckCircle, Shield, MousePointerClick } from 'lucide-react';
+
+const PALETTE = {
+  darkPurple: '#532A8C',
+  mutedPurple: '#9D8ABB',
+  green: '#7ABF49',
+  mutedGreen: '#96BF78',
+  lightGray: '#F2F2F2',
+  lightPurple: '#C3ACE8',
+};
+
+const CARDS_DATA = [
+  { pairId: 1, text: "Category:\nCritical Items" },
+  { pairId: 1, text: "Example:\nBlood and saliva on extraction forceps, surgical burs" },
+
+  { pairId: 2, text: "Category:\nSemi-critical Items" },
+  { pairId: 2, text: "Example:\nA used impression tray, intraoral mirrors" },
+
+  { pairId: 3, text: "Category:\nNon-critical Items" },
+  { pairId: 3, text: "Example:\nShield for the curing light, patient safety glasses" }
+];
+
+export default function App() {
+  const [cards, setCards] = useState([]);
+  const [flippedIndexes, setFlippedIndexes] = useState([]);
+  const [matches, setMatches] = useState(0);
+  const [moves, setMoves] = useState(0);
+  const [gameWon, setGameWon] = useState(false);
+
+  // Initialize and shuffle game
+  const initializeGame = () => {
+    const shuffledCards = [...CARDS_DATA]
+      .sort(() => Math.random() - 0.5)
+      .map((card, index) => ({
+        ...card,
+        id: index,
+        isFlipped: false,
+        isMatched: false,
+      }));
+    setCards(shuffledCards);
+    setFlippedIndexes([]);
+    setMatches(0);
+    setMoves(0);
+    setGameWon(false);
+  };
+
+  useEffect(() => {
+    initializeGame();
+  }, []);
+
+  const handleCardClick = (index) => {
+    // Prevent clicking if two cards are already flipped, or if card is already flipped/matched
+    if (
+      flippedIndexes.length === 2 ||
+      cards[index].isFlipped ||
+      cards[index].isMatched
+    ) {
+      return;
     }
 
-    .tab-button {
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
+    const newCards = [...cards];
+    newCards[index].isFlipped = true;
+    setCards(newCards);
 
-    .tab-button:hover {
-      transform: scale(1.05);
-    }
+    const newFlippedIndexes = [...flippedIndexes, index];
+    setFlippedIndexes(newFlippedIndexes);
 
-    .tab-button.active {
-      border: 2px solid #532A8C;
-      border-radius: 1rem;
-      background-color: #C3ACE8;
+    if (newFlippedIndexes.length === 2) {
+      setMoves(moves + 1);
+      checkForMatch(newFlippedIndexes);
     }
+  };
 
-    .tab-content {
-      display: none;
+  const checkForMatch = (currentFlippedIndexes) => {
+    const [firstIndex, secondIndex] = currentFlippedIndexes;
+    const isMatch = cards[firstIndex].pairId === cards[secondIndex].pairId;
+
+    if (isMatch) {
+      setTimeout(() => {
+        const newCards = [...cards];
+        newCards[firstIndex].isMatched = true;
+        newCards[secondIndex].isMatched = true;
+        setCards(newCards);
+        setFlippedIndexes([]);
+        
+        const newMatchesCount = matches + 1;
+        setMatches(newMatchesCount);
+        if (newMatchesCount === CARDS_DATA.length / 2) {
+          setGameWon(true);
+        }
+      }, 500);
+    } else {
+      setTimeout(() => {
+        const newCards = [...cards];
+        newCards[firstIndex].isFlipped = false;
+        newCards[secondIndex].isFlipped = false;
+        setCards(newCards);
+        setFlippedIndexes([]);
+      }, 1200);
     }
+  };
 
-    .tab-content.active {
-      display: block;
-    }
-  </style>
-</head>
-<body class="p-6 flex justify-center">
+  return (
+    <div 
+      className="min-h-screen flex flex-col items-center py-10 px-4 font-sans"
+      style={{ backgroundColor: PALETTE.lightGray, color: PALETTE.darkPurple }}
+    >
+      {/* Required 3D flip styling */}
+      <style>{`
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+      `}</style>
 
-  <div class="w-full max-w-4xl bg-white border-2 border-[#C3ACE8] rounded-xl shadow-lg flex flex-col md:flex-row overflow-hidden">
-    
-    <!-- Sidebar with Icons -->
-    <div class="w-full md:w-1/3 bg-[#F2F2F2] flex flex-col items-center justify-start p-4 space-y-6">
-      <img src="Critical sterilisation.png" class="w-24 h-24 tab-button active" data-tab="critical" alt="Critical Item Icon">
-      <img src="Semi-Critical sterilisation.png" class="w-24 h-24 tab-button" data-tab="semi" alt="Semi-Critical Item Icon">
-      <img src="Noncritical sterilisation.png" class="w-24 h-24 tab-button" data-tab="noncritical" alt="Non-Critical Item Icon">
+      <div className="max-w-4xl w-full">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: PALETTE.darkPurple }}>
+            Spaulding Classification Match
+          </h1>
+          <p className="text-lg mb-2" style={{ color: PALETTE.mutedPurple }}>
+            Match the clinical categories to their real-life examples!
+          </p>
+          
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <MousePointerClick size={20} style={{ color: PALETTE.darkPurple }} className="animate-pulse" />
+            <span className="text-base font-medium" style={{ color: PALETTE.darkPurple }}>
+              Tap or click on the tiles to flip them over and find the matches.
+            </span>
+          </div>
+          
+          <div className="flex justify-center items-center gap-8 mb-4">
+            <div className="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
+              <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: PALETTE.mutedPurple }}>Moves</span>
+              <span className="text-2xl font-bold" style={{ color: PALETTE.darkPurple }}>{moves}</span>
+            </div>
+            <div className="flex flex-col items-center bg-white px-6 py-2 rounded-lg shadow-sm">
+              <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: PALETTE.mutedPurple }}>Matches</span>
+              <span className="text-2xl font-bold" style={{ color: PALETTE.green }}>{matches} / {CARDS_DATA.length / 2}</span>
+            </div>
+            <button
+              onClick={initializeGame}
+              className="flex items-center gap-2 px-4 py-3 rounded-lg font-bold transition-transform hover:scale-105 shadow-md active:scale-95"
+              style={{ backgroundColor: PALETTE.darkPurple, color: PALETTE.lightGray }}
+            >
+              <RefreshCw size={20} />
+              Restart
+            </button>
+          </div>
+        </div>
+
+        {/* Victory Message */}
+        {gameWon && (
+          <div 
+            className="mb-8 p-6 rounded-xl text-center shadow-lg animate-bounce"
+            style={{ backgroundColor: PALETTE.green, color: PALETTE.lightGray }}
+          >
+            <CheckCircle size={48} className="mx-auto mb-2" />
+            <h2 className="text-2xl font-bold mb-1">Excellent Work!</h2>
+            <p className="text-lg">You've mastered the Spaulding Classification in {moves} moves.</p>
+          </div>
+        )}
+
+        {/* Game Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto">
+          {cards.map((card, index) => (
+            <div
+              key={card.id}
+              className="relative aspect-[4/3] cursor-pointer perspective-1000 w-full"
+              onClick={() => handleCardClick(index)}
+            >
+              <div
+                className={`w-full h-full duration-500 transform-style-3d shadow-md rounded-xl ${
+                  card.isFlipped || card.isMatched ? 'rotate-y-180' : ''
+                }`}
+              >
+                {/* Front of Card (Face Down) */}
+                <div
+                  className="absolute w-full h-full backface-hidden rounded-xl flex items-center justify-center border-4 transition-all hover:brightness-110"
+                  style={{ 
+                    backgroundColor: PALETTE.darkPurple,
+                    borderColor: PALETTE.mutedPurple,
+                  }}
+                >
+                  <Shield size={48} style={{ color: PALETTE.lightPurple, opacity: 0.8 }} />
+                </div>
+
+                {/* Back of Card (Face Up / Content) */}
+                <div
+                  className="absolute w-full h-full backface-hidden rotate-y-180 rounded-xl flex items-center justify-center p-4 text-center border-4"
+                  style={{ 
+                    backgroundColor: card.isMatched ? PALETTE.green : PALETTE.lightPurple,
+                    borderColor: card.isMatched ? PALETTE.mutedGreen : PALETTE.darkPurple,
+                    color: card.isMatched ? PALETTE.lightGray : PALETTE.darkPurple
+                  }}
+                >
+                  <p className="text-sm md:text-base font-semibold leading-tight whitespace-pre-line">
+                    {card.text}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+      </div>
     </div>
-
-    <!-- Content Area -->
-    <div class="w-full md:w-2/3 p-6 space-y-6 text-[#333]">
-      
-      <div id="critical" class="tab-content active">
-        <h2 class="text-2xl font-bold text-[#532A8C] mb-2">Critical Items</h2>
-        <ul class="list-disc list-inside space-y-1">
-          <li>Must be sterile at the point of use</li>
-          <li>Must be capable of being steam sterilised (or classed as single use only - disposable)</li>
-          <li>Critical items not wrapped must be used immediately after sterilisation</li>
-          <li>Critical items wrapped must be stored so as not to damage the integrity of packaging</li>
-          <li>Must be stored in a clean dry covered area</li>
-          <li>Must have a Batch Control Identification label (BCI) when sterilised</li>
-        </ul>
-      </div>
-
-      <div id="semi" class="tab-content">
-        <h2 class="text-2xl font-bold text-[#532A8C] mb-2">Semi-Critical Items</h2>
-        <p>These devices are designed and labelled for multiple uses and are reprocessed by thorough cleaning followed by high-level disinfection or sterilisation between patients. They are made of materials that can withstand repeated reprocessing.</p>
-        <ul class="list-disc list-inside space-y-1 mt-2">
-          <li>Must be sterilised where possible</li>
-          <li>If not able to withstand steam sterilisation, must be cleaned and disinfected with a TGA-listed high-level instrument grade disinfectant or processed through a documented thermal disinfector/washer cycle</li>
-          <li>After sterilising or disinfecting, must be stored in a way to prevent contamination (e.g., bagged/wrapped and in a closed drawer or container)</li>
-        </ul>
-      </div>
-
-      <div id="noncritical" class="tab-content">
-        <h2 class="text-2xl font-bold text-[#532A8C] mb-2">Non-Critical Items</h2>
-        <p>Cleaning with medical instrument grade detergent and water is sufficient. However, thermal disinfection with heat and water is appropriate if the item can be processed this way.</p>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    document.querySelectorAll('.tab-button').forEach(button => {
-      button.addEventListener('click', () => {
-        // Toggle button active state
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-
-        // Toggle tab content
-        const tab = button.dataset.tab;
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
-      });
-    });
-  </script>
-
-</body>
-</html>
+  );
+}
